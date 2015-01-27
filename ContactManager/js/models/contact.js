@@ -11,13 +11,14 @@ var app = app || {};
       phoneNumber: '1 234 5678 9100',
       email: 'jonh.doe@unknown.com'
     },
-    initialize: function(){
-      $.ajaxPrefilter(function(options) {
+    urlRoot: 'http://2-dot-crowdev-template.appspot.com/v1/tests/',
+
+    initialize: function () {
+      var that = this;
+
+      $.ajaxPrefilter( function(options) {
         options.crossDomain ={
           crossDomain: true
-        };
-        options.xhrFields = {
-          withCredentials: true
         };
       });
     }

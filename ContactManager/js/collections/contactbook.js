@@ -5,7 +5,7 @@ var app = app || {};
 
   app.ContactBook = Backbone.Collection.extend({
     model: app.Contact,
-    url: 'http://2-dot-crowdev-template.appspot.com/v1/tests'
+    url: 'http://2-dot-crowdev-template.appspot.com/v1/tests/'
   });
 
 })();
