@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Hello World (Three.js)</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <link rel=stylesheet href="css/base.css"/>
+</head>
+<body>
+
+<div class="UI-container">
+  <div class="dropdown">
+    <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+      Add Elements
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+      <li id="addSquareButton" role="presentation"><a role="menuitem" tabindex="-1" href="#">Add square</a></li>
+      <li id="addCircumButton" role="presentation"><a role="menuitem" tabindex="-1" href="#">Add circumference</a></li>
+    </ul>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+<script src="js/libs/TrackballControls.js"></script>
+<script src="js/libs/ColladaLoader.js"></script>
+<script src="js/libs/q.js"></script>
+
+<!-- jQuery code to display an information button and box when clicked. -->
+<script src="js/libs/jquery-1.9.1.js"></script>
+<script src="js/libs/jquery-ui.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+<!-- ------------------------------------------------------------ -->
+
+<div id="ThreeJS" style="z-index: 1; position: absolute; left:0px; top:0px"></div>
+<script>
+  var container, dae;
+  var camera, controls, scene, renderer, objectControls, isRightMB;
+  var objects = [], plane;
+
+  var targetRotationX = 0;
+  var targetRotationOnMouseDownX = 0;
+
+  var targetRotationY = 0;
+  var targetRotationOnMouseDownY = 0;
+
+  var mouseX = 0;
+  var mouseXOnMouseDown = 0;
+
+  var mouseY = 0;
+  var mouseYOnMouseDown = 0;
+
+  var windowHalfX = window.innerWidth / 2;
+  var windowHalfY = window.innerHeight / 2;
+
+  var finalRotationY;
+
+  var raycaster = new THREE.Raycaster();
+  var mouse = new THREE.Vector2(),
+      offset = new THREE.Vector3(),
+      INTERSECTED, SELECTED;
+
+  init();
+  animate();
+
+  function init() {
+
+    setUIEvents();
+
+    container = document.getElementById( 'ThreeJS' );
+
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+    camera.position.z = 200;
+
+    controls = new THREE.TrackballControls( camera );
+    controls.rotateSpeed = 1.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = true;
+    controls.dynamicDampingFactor = 0.3;
+
+    scene = new THREE.Scene();
+
+    scene.add( new THREE.AmbientLight( 0x505050 ) );
+
+    var light = new THREE.SpotLight( 0xffffff, 1.5 );
+    light.position.set( 0, 500, 2000 );
+    light.castShadow = true;
+
+    light.shadowCameraNear = 200;
+    light.shadowCameraFar = camera.far;
+    light.shadowCameraFov = 50;
+
+    light.shadowBias = -0.00022;
+    light.shadowDarkness = 0.5;
+
+    light.shadowMapWidth = 2048;
+    light.shadowMapHeight = 2048;
+
+    scene.add( light );
+
+    addSquare();
+
+    plane = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry( 2000, 2000, 8, 8 ),
+        new THREE.MeshBasicMaterial( { color: 0x000000, opacity: 0.25, transparent: true } )
+    );
+    plane.visible = false;
+    scene.add( plane );
+
+    var gridXZ = new THREE.GridHelper(100, 10);
+    gridXZ.setColors( new THREE.Color(0x006600), new THREE.Color(0x006600) );
+    gridXZ.position.set( 0,0,0 );
+    scene.add(gridXZ);
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setClearColor( 0xf0f0f0 );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.sortObjects = false;
+
+    renderer.shadowMapEnabled = true;
+    renderer.shadowMapType = THREE.PCFShadowMap;
+
+    container.appendChild( renderer.domElement );
+
+    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
+    renderer.domElement.addEventListener( 'dragover', function(event){
+      event.preventDefault();
+    },false);
+    renderer.domElement.addEventListener("drop", onDocumentFileDrop, false);
+
+    //
+
+    window.addEventListener( 'resize', onWindowResize, false );
+
+  }
+
+  function onDocumentFileDrop(evt) {
+
+    var files = evt.dataTransfer.files;
+    loadFile(files)
+        .then(loadFileIntoCanvas)
+        .then(loadFileCompleted);
+
+    evt.preventDefault();
+  }
+
+  function loadFile(files){
+    var deferred = Q.defer();
+    if (files.length > 0) {
+      var file = files[0];
+      if (typeof FileReader !== "undefined") {
+        var reader = new FileReader();
+        // Note: addEventListener doesn't work in Google Chrome for this event
+        reader.onload = function (evt) {
+          deferred.resolve(evt.target.result);
+        };
+        reader.readAsText(file);
+      }
+    }else{
+      deferred.reject(new Error('File not found'));
+    }
+    return deferred.promise;
+  }
+
+  function loadFileIntoCanvas(responseText){
+    var deferred = Q.defer();
+    var xmlParser = new DOMParser();
+    var responseXML = xmlParser.parseFromString(responseText, "application/xml" );
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.parse(responseXML, function(collada){
+      deferred.resolve(collada);
+    });
+    return deferred.promise;
+  }
+
+  function loadFileCompleted(collada){
+    dae = collada.scene;
+    dae.traverse( function ( child ) {
+      if ( child instanceof THREE.SkinnedMesh ) {
+        var animation = new THREE.Animation( child, child.geometry.animation );
+        animation.play();
+      }
+    });
+    dae.scale.x = dae.scale.y = dae.scale.z = 0.002;
+    dae.updateMatrix();
+    scene.add(dae);
+  }
+
+  function setUIEvents(){
+    $('.dropdown-toggle').dropdown();
+    $('#addSquareButton').click(addSquare);
+    $('#addCircumButton').click(addCircum);
+  }
+
+  function addSquare(e){
+    var geometry = new THREE.BoxGeometry( 40, 40, 40 );
+    var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+    object.position.set(Math.random() * 100, Math.random() * 100, Math.random() * 100);
+    scene.add( object );
+    objects.push( object );
+  }
+
+  function addCircum(e){
+    var sphereGeometry = new THREE.SphereGeometry( 40, 32, 16 );
+    var sphereMaterial = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
+    var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.position.set(Math.random() * 100, Math.random() * 100, Math.random() * 100);
+    scene.add(sphere);
+    objects.push(sphere);
+  }
+
+  function onWindowResize() {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+  }
+
+  function onDocumentMouseMove( event ) {
+
+    event.preventDefault();
+
+    if(isRightMB){
+      mouseX = event.clientX - windowHalfX;
+      mouseY = event.clientY - windowHalfY;
+
+      targetRotationY = targetRotationOnMouseDownY + (mouseY - mouseYOnMouseDown) * 0.02;
+      targetRotationX = targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.02;
+    }else{
+      mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+      mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+      raycaster.setFromCamera( mouse, camera );
+
+      if ( SELECTED ) {
+
+        var intersects = raycaster.intersectObject( plane );
+        SELECTED.position.copy( intersects[ 0 ].point.sub( offset ) );
+        return;
+
+      }
+
+      var intersects = raycaster.intersectObjects( objects );
+
+      if ( intersects.length > 0 ) {
+
+        if ( INTERSECTED != intersects[ 0 ].object ) {
+
+          if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+          INTERSECTED = intersects[ 0 ].object;
+          INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+
+          plane.position.copy( INTERSECTED.position );
+          plane.lookAt( camera.position );
+
+        }
+
+        container.style.cursor = 'pointer';
+
+      } else {
+
+        if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+
+        INTERSECTED = null;
+
+        container.style.cursor = 'auto';
+
+      }
+    }
+
+
+
+  }
+
+  function onDocumentMouseDown( event ) {
+    event.preventDefault();
+
+
+    if ("which" in event)  // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
+      isRightMB = event.which == 3;
+    else if ("button" in e)  // IE, Opera
+      isRightMB = event.button == 2;
+
+
+    var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 ).unproject( camera );
+    var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+    var intersects = raycaster.intersectObjects( objects );
+
+    if ( intersects.length > 0 ) {
+
+      controls.enabled = false;
+      SELECTED = intersects[ 0 ].object;
+
+      var intersects = raycaster.intersectObject( plane );
+      offset.copy( intersects[ 0 ].point ).sub( plane.position );
+      container.style.cursor = 'move';
+      if(isRightMB){
+        rightMBDown();
+      }
+    }
+
+  }
+
+  function rightMBDown(){
+    mouseXOnMouseDown = event.clientX - windowHalfX;
+    targetRotationOnMouseDownX = targetRotationX;
+
+    mouseYOnMouseDown = event.clientY - windowHalfY;
+    targetRotationOnMouseDownY = targetRotationY;
+  }
+
+  function onDocumentMouseUp( event ) {
+
+    event.preventDefault();
+
+    if (INTERSECTED) {
+      if(isRightMB && objectControls && objectControls.enabled){
+        objectControls.enabled = false;
+      }else{
+        plane.position.copy(INTERSECTED.position);
+      }
+      SELECTED = null;
+      isRightMB = false;
+      controls.enabled = true;
+    }
+
+    container.style.cursor = 'auto';
+
+  }
+
+  //
+
+  function animate() {
+
+    requestAnimationFrame( animate );
+
+    render();
+
+  }
+
+  function render() {
+
+    if(isRightMB && INTERSECTED){
+      INTERSECTED.rotation.y += ( targetRotationX - INTERSECTED.rotation.y ) * 0.1;
+
+      finalRotationY = (targetRotationY - INTERSECTED.rotation.x);
+      if (INTERSECTED.rotation.x  <= 1 && INTERSECTED.rotation.x >= -1 ) {
+
+        INTERSECTED.rotation.x += finalRotationY * 0.1;
+      }
+      if (INTERSECTED.rotation.x  > 1 ) {
+
+        INTERSECTED.rotation.x = 1
+      }
+
+      if (INTERSECTED.rotation.x  < -1 ) {
+        INTERSECTED.rotation.x = -1
+      }
+    }
+    controls.update();
+    renderer.render( scene, camera );
+
+  }
+</script>
+
+</body>
