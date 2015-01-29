@@ -3,10 +3,15 @@ var Demo = {};
 (function(Demo){
 
   var publicAPI = {
-    init: init
+    init  : init
   };
 
   $.extend(Demo, publicAPI);
+
+  function animate() {
+    requestAnimationFrame( animate );
+    render();
+  }
 
   function init() {
 
@@ -24,28 +29,23 @@ var Demo = {};
     animate();
   }
 
-  function animate() {
-    requestAnimationFrame( animate );
-    render();
-  }
-
   function render() {
 
-    if(Demo.Mouse.properties.isRightMB && INTERSECTED){
-      INTERSECTED.rotation.y += ( targetRotationX - INTERSECTED.rotation.y ) * 0.1;
+    if(Demo.Mouse.properties.isRightMB && Demo.ObjectRotation.intersectedObject){
+      Demo.ObjectRotation.intersectedObject.rotation.y += ( Demo.ObjectRotation.targetRotationX - Demo.ObjectRotation.intersectedObject.rotation.y ) * 0.1;
 
-      finalRotationY = (targetRotationY - INTERSECTED.rotation.x);
-      if (INTERSECTED.rotation.x  <= 1 && INTERSECTED.rotation.x >= -1 ) {
+      Demo.ObjectRotation.finalRotationY = (Demo.ObjectRotation.targetRotationY - Demo.ObjectRotation.intersectedObject.rotation.x);
+      if (Demo.ObjectRotation.intersectedObject.rotation.x  <= 1 && Demo.ObjectRotation.intersectedObject.rotation.x >= -1 ) {
 
-        INTERSECTED.rotation.x += finalRotationY * 0.1;
+        Demo.ObjectRotation.intersectedObject.rotation.x += Demo.ObjectRotation.finalRotationY * 0.1;
       }
-      if (INTERSECTED.rotation.x  > 1 ) {
+      if (Demo.ObjectRotation.intersectedObject.rotation.x  > 1 ) {
 
-        INTERSECTED.rotation.x = 1
+        Demo.ObjectRotation.intersectedObject.rotation.x = 1
       }
 
-      if (INTERSECTED.rotation.x  < -1 ) {
-        INTERSECTED.rotation.x = -1
+      if (Demo.ObjectRotation.intersectedObject.rotation.x  < -1 ) {
+        Demo.ObjectRotation.intersectedObject.rotation.x = -1
       }
     }
     Demo.Scenes.controls.update();

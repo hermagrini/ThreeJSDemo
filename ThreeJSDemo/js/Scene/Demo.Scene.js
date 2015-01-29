@@ -7,22 +7,26 @@ Demo.Scenes = {};
       container = document.getElementById('ThreeJS'),
       camera = {},
       controls = {},
-      plane = {};
+      plane = {},
+      windowHalfX = window.innerWidth / 2,
+      windowHalfY = window.innerHeight / 2;
 
   var publicAPI = {
-    addCircum : addCircum,
-    addSquare : addSquare,
-    camera  : camera,
-    controls: controls,
-    container : container,
-    initCamera: initCamera,
-    initControls: initControls,
-    initGrid: initGrid,
-    initLights: initLights,
-    initPlane: initPlane,
-    instance  : instance,
-    objects   : objects,
-    plane: plane
+    addCircum     : addCircum,
+    addSquare     : addSquare,
+    camera        : camera,
+    controls      : controls,
+    container     : container,
+    initCamera    : initCamera,
+    initControls  : initControls,
+    initGrid      : initGrid,
+    initLights    : initLights,
+    initPlane     : initPlane,
+    instance      : instance,
+    objects       : objects,
+    plane         : plane,
+    windowHalfX   : windowHalfX,
+    windowHalfY   : windowHalfY
   };
 
   $.extend(Demo.Scenes, publicAPI);
@@ -45,8 +49,8 @@ Demo.Scenes = {};
   }
 
   function initCamera(){
-    Demo.Scenes.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
-    Demo.Scenes.camera.position.z = 200;
+    Demo.Scenes.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+    Demo.Scenes.camera.position.set(0,150,400);
   }
 
   function initControls(){

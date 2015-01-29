@@ -5,8 +5,8 @@ Demo.Renderer = {};
   var instance = {};
 
   var publicAPI = {
-    init: init,
-    instance: instance
+    init      : init,
+    instance  : instance
   };
 
   $.extend(Demo.Renderer, publicAPI);

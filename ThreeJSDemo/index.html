@@ -29,40 +29,20 @@
 <script src="js/libs/ColladaLoader.js"></script>
 <script src="js/libs/q.js"></script>
 
-<!-- jQuery code to display an information button and box when clicked. -->
 <script src="js/libs/jquery-1.9.1.js"></script>
-<script src="js/libs/jquery-ui.js"></script>
 
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
 
 <script src="js/Demo.js"></script>
 <script src="js/Events/Demo.Events.js"></script>
+<script src="js/FileUploader/Demo.FileUploader.js"></script>
 <script src="js/Mouse/Demo.Mouse.js"></script>
+<script src="js/ObjectRotation/ObjectRotation.js"></script>
 <script src="js/Scene/Demo.Scene.js"></script>
 <script src="js/Renderer/Demo.Renderer.js"></script>
 
 <script>
   $(document).on('ready', Demo.init);
-
-  var container, dae;
-  var camera, controls, scene, renderer, objectControls;
-  var objects = [], plane;
-
-  var targetRotationX = 0;
-  var targetRotationOnMouseDownX = 0;
-
-  var targetRotationY = 0;
-  var targetRotationOnMouseDownY = 0;
-
-  var windowHalfX = window.innerWidth / 2;
-  var windowHalfY = window.innerHeight / 2;
-
-  var finalRotationY;
-
-  var raycaster = new THREE.Raycaster();
-  var offset = new THREE.Vector3(),
-      INTERSECTED, SELECTED;
-
 </script>
 
 </body>
