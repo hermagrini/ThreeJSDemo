@@ -98,3 +98,6 @@ ul.c-controls li a:hover {
 .glyphicon:before, .fa:before{
     padding-right: 10px;
 }
+.delete, .edit{
+    cursor: pointer;
+}

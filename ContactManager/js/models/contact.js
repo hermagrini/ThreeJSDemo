@@ -16,9 +16,6 @@ var app = app || {};
         options.crossDomain ={
           crossDomain: true
         };
-        options.xhrFields = {
-          withCredentials: true
-        };
       });
     }
   });

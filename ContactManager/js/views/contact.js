@@ -9,7 +9,7 @@ var app = app || {};
 
     events: {
       'click .delete': 'deleteContact',
-      'click #contact-info': 'setContactToEdit'
+      'click .edit': 'setContactToEdit'
     },
 
     render: function() {
@@ -20,7 +20,7 @@ var app = app || {};
     },
 
     setContactToEdit: function(){
-      var inputs = $('#addContact').children('input');
+      var inputs = $('#addContact')[0];
       _.each(inputs, function(el) {
         $(el).val(this.model.attributes[el.id]);
       }, this);

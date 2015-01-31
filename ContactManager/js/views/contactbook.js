@@ -13,10 +13,12 @@ var app = app || {};
       this.listenTo( this.collection, 'add', this.renderContact);
       this.listenTo( this.collection, 'reset', this.render);
       this.listenTo( this.collection, 'change', this.render);
+      this.listenTo( this.collection, 'sort', this.render);
     },
 
     events:{
-      'click #add':'addContact'
+      'click #add':'addContact',
+      'click .sortContact': 'sortContact'
     },
 
     render: function() {
@@ -31,11 +33,12 @@ var app = app || {};
 
       var formData = {};
 
-      $('#addContact').children('input').each(function(index, el) {
+        var inputs = $('#addContact')[0];
+        _.each(inputs,function(el) {
         if( $(el).val() !== '' ) {
           formData[ el.id ] = $(el).val();
         }
-      });
+      }, this);
 
       if(formData.id && formData.id != ''){
         var contact = this.collection.get(formData.id);
@@ -54,6 +57,12 @@ var app = app || {};
         model: item
       });
       $('#generated-contact-list').append(contactView.render().el);
+    },
+
+    sortContact: function(e){
+      e.preventDefault();
+      this.collection.changeSort(e.currentTarget.getAttribute("data-sort-by"));
+      this.collection.sort();
     }
   });
 
